@@ -4,3 +4,6 @@
 
 # build
 /build*/
+
+esp32_original.ino
+main_original.c
