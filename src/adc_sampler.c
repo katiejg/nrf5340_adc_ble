@@ -44,11 +44,11 @@ static void timer_fn(struct k_timer *t)
  * The k_timer + semaphore above fires every 10 ms, so the 100 Hz target is
  * met as long as sample_all_channels() finishes before the next tick.
  *
- * TODO(DMA — phase 2): Replace this function body with adc_read_async() +
+ * TODO (DMA — phase 2): Replace this function body with adc_read_async() +
  * k_poll() so the thread yields during conversion and the CPU can enter
  * sleep between samples.
  *
- * TODO(DMA — phase 3, full CPU sleep): Configure SAADC scan mode triggered
+ * TODO (DMA — phase 3, full CPU sleep): Configure SAADC scan mode triggered
  * by TIMER via DPPI; handle the SAADC END event in a callback that writes
  * directly into adc_sample_q.  The CPU can then stay in System ON Low Power
  * between callbacks entirely.
