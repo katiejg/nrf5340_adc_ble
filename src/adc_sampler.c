@@ -38,23 +38,17 @@ static void timer_fn(struct k_timer *t)
 	k_sem_give(&sample_sem);
 }
 
-/* ── Verified blocking read (preserved from original implementation) ───────
+/* ── Async Read (phase 2) ───────
  *
- * Each adc_read() takes ~10–50 µs; three channels well under 1 ms total.
- * The k_timer + semaphore above fires every 10 ms, so the 100 Hz target is
- * met as long as sample_all_channels() finishes before the next tick.
- *
- * TODO (DMA — phase 2): Replace this function body with adc_read_async() +
- * k_poll() so the thread yields during conversion and the CPU can enter
- * sleep between samples.
+ * Thread yields during conversion and the CPU can enter sleep between samples.
  *
  * TODO (DMA — phase 3, full CPU sleep): Configure SAADC scan mode triggered
  * by TIMER via DPPI; handle the SAADC END event in a callback that writes
  * directly into adc_sample_q. The CPU can then stay in System ON Low Power
  * between callbacks entirely.
- */
+*/
 
-static void sample_all_channels(struct adc_sample *out)
+static void sample_all_channels_async(struct adc_sample *out)
 {
 	int16_t buf;
 	struct adc_sequence sequence = {
@@ -62,9 +56,16 @@ static void sample_all_channels(struct adc_sample *out)
 		.buffer_size = sizeof(buf),
 	};
 
+	static struct k_poll_signal async_sig = K_POLL_SIGNAL_INITIALIZER(async_sig);
+	struct k_poll_event async_evt = 
+		K_POLL_EVENT_INITIALIZER(K_POLL_TYPE_SIGNAL, 
+						K_POLL_MODE_NOTIFY_ONLY, 
+						&async_sig);
+
 	out->timestamp_us = k_cyc_to_us_floor32(k_cycle_get_32());
 
 	for (size_t i = 0; i < ARRAY_SIZE(adc_channels); i++) {
+		// Initialize sequence
 		int err = adc_sequence_init_dt(&adc_channels[i], &sequence);
 		if (err < 0) {
 			LOG_ERR("sequence init ch%u: %d", i, err);
@@ -73,9 +74,22 @@ static void sample_all_channels(struct adc_sample *out)
 			continue;
 		}
 
-		err = adc_read(adc_channels[i].dev, &sequence);
+		// Reset signal before each read
+		k_poll_signal_reset(&async_sig);
+		async_evt.state = K_POLL_STATE_NOT_READY;
+
+		err = adc_read_async(adc_channels[i].dev, &sequence, &async_sig);
 		if (err < 0) {
 			LOG_ERR("adc_read ch%u: %d", i, err);
+			out->raw[i] = 0;
+			out->mv[i]  = 0;
+			continue;
+		}
+
+		// Sleep while waiting for completion
+		err = k_poll(&async_evt, 1, K_FOREVER);
+		if (err < 0) {
+			LOG_ERR("k_poll ch%u: %d", i, err);
 			out->raw[i] = 0;
 			out->mv[i]  = 0;
 			continue;
@@ -117,7 +131,8 @@ static void sampler_thread_fn(void *a, void *b, void *c)
 		}
 
 		struct adc_sample s;
-		sample_all_channels(&s);
+		// sample_all_channels(&s);
+		sample_all_channels_async(&s);
 
 		if (k_msgq_put(&adc_sample_q, &s, K_NO_WAIT) != 0) {
 			LOG_WRN("queue full, sample dropped");
