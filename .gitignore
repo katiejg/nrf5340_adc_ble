@@ -4,3 +4,6 @@
 
 # build
 /build*/
+
+# testing data
+/tools/*.csv
