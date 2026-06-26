@@ -58,6 +58,7 @@ void btn_setup() {
 	}
 
 	// Configure button
+	// Must be configured as input with an internal pull-up resistor
       ret = gpio_pin_configure_dt(&btn, GPIO_INPUT | GPIO_PULL_UP);
 	if (ret != 0) {
 		return;
