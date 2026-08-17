@@ -22,11 +22,11 @@ int main(void)
 		return err;
 	}
 
-	// err = ble_sender_init();
-	// if (err) {
-	// 	LOG_ERR("ble_sender_init: %d", err);
-	// 	return err;
-	// }
+	err = ble_sender_init();
+	if (err) {
+		LOG_ERR("ble_sender_init: %d", err);
+		return err;
+	}
 
 	adc_sampler_start();
 
