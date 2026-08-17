@@ -8,7 +8,7 @@
 #include <zephyr/logging/log.h>
 
 #include "adc_sampler.h"
-#include "ble_sender.h"
+// #include "ble_sender.h"
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
@@ -22,11 +22,11 @@ int main(void)
 		return err;
 	}
 
-	err = ble_sender_init();
-	if (err) {
-		LOG_ERR("ble_sender_init: %d", err);
-		return err;
-	}
+	// err = ble_sender_init();
+	// if (err) {
+	// 	LOG_ERR("ble_sender_init: %d", err);
+	// 	return err;
+	// }
 
 	adc_sampler_start();
 

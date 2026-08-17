@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 /* Must match the number of channels declared in boards/*.overlay */
-#define ADC_NUM_CHANNELS 3
+#define ADC_NUM_CHANNELS 2
 
 /* ── Contract ─────────────────────────────────────────────────────────────── */
 
@@ -19,7 +19,7 @@ struct adc_sample {
 /* Shared queue: ADC is the producer, BLE sender is the consumer.
  * Depth 20 = 200 ms of headroom at 100 Hz.
  * Defined in adc_sampler.c; BLE side includes this header for the extern. */
-extern struct k_msgq adc_sample_q;
+// extern struct k_msgq adc_sample_q;
 
 /* ── API ──────────────────────────────────────────────────────────────────── */
 

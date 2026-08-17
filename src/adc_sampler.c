@@ -22,7 +22,8 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_NUM_CHANNELS,
 
 /* ── Queue (contract with BLE consumer) ──────────────────────────────────── */
 
-K_MSGQ_DEFINE(adc_sample_q, sizeof(struct adc_sample), 20, 4);
+// For BLE:
+// K_MSGQ_DEFINE(adc_sample_q, sizeof(struct adc_sample), 20, 4);
 
 /* ── Internal state ───────────────────────────────────────────────────────── */
 
@@ -134,9 +135,10 @@ static void sampler_thread_fn(void *a, void *b, void *c)
 		// sample_all_channels(&s);
 		sample_all_channels_async(&s);
 
-		if (k_msgq_put(&adc_sample_q, &s, K_NO_WAIT) != 0) {
-			LOG_WRN("queue full, sample dropped");
-		}
+		// For BLE:
+		// if (k_msgq_put(&adc_sample_q, &s, K_NO_WAIT) != 0) {
+		// 	LOG_WRN("queue full, sample dropped");
+		// }
 	}
 }
 
